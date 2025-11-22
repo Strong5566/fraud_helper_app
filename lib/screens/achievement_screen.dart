@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/score_service.dart';
 import '../services/achievement_notifier.dart';
+import '../utils/app_images.dart';
 
 class AchievementScreen extends StatefulWidget {
   const AchievementScreen({Key? key}) : super(key: key);
@@ -106,12 +107,10 @@ class _AchievementScreenState extends State<AchievementScreen> with AutomaticKee
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               border: Border.all(color: Colors.blue, width: 3),
-              color: const Color(0xFF3A3A3A),
             ),
-            child: const Icon(
-              Icons.person,
-              size: 50,
-              color: Colors.white,
+            child: CircleAvatar(
+              radius: 47,
+              backgroundImage: AssetImage(AppImages.userAvatar),
             ),
           ),
           const SizedBox(height: 16),
