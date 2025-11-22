@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:io';
 import '../models/message.dart';
+import '../utils/app_images.dart';
 
 class MessageBubble extends StatelessWidget {
   final Message message;
@@ -18,8 +19,7 @@ class MessageBubble extends StatelessWidget {
           if (!message.isUser) ...[
             CircleAvatar(
               radius: 16,
-              backgroundColor: Colors.green,
-              child: const Text('瓜', style: TextStyle(color: Colors.white, fontSize: 12)),
+              backgroundImage: AssetImage(AppImages.robotAvatar),
             ),
             const SizedBox(width: 8),
           ],
@@ -118,8 +118,7 @@ class MessageBubble extends StatelessWidget {
             const SizedBox(width: 8),
             CircleAvatar(
               radius: 16,
-              backgroundColor: Colors.grey[700],
-              child: const Icon(Icons.person, color: Colors.white, size: 16),
+              backgroundImage: AssetImage(AppImages.userAvatar),
             ),
           ],
         ],
