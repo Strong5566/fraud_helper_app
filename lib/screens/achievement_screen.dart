@@ -1,10 +1,65 @@
 import 'package:flutter/material.dart';
+import '../services/score_service.dart';
+import '../services/achievement_notifier.dart';
 
-class AchievementScreen extends StatelessWidget {
-  const AchievementScreen({super.key});
+class AchievementScreen extends StatefulWidget {
+  const AchievementScreen({Key? key}) : super(key: key);
+
+  @override
+  State<AchievementScreen> createState() => _AchievementScreenState();
+}
+
+class _AchievementScreenState extends State<AchievementScreen> with AutomaticKeepAliveClientMixin {
+  final ScoreService _scoreService = ScoreService();
+  final AchievementNotifier _notifier = AchievementNotifier();
+  Map<String, dynamic> _currentLevel = {};
+  Map<String, dynamic>? _nextLevel;
+  List<String> _unlockedAchievements = [];
+
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+    _notifier.addListener(_loadData);
+  }
+
+  @override
+  void dispose() {
+    _notifier.removeListener(_loadData);
+    super.dispose();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _loadData();
+  }
+
+  void _loadData() async {
+    await _scoreService.loadLevelData();
+    if (mounted) {
+      setState(() {
+        _currentLevel = _scoreService.getCurrentLevel();
+        _nextLevel = _scoreService.getNextLevel();
+        _unlockedAchievements = _scoreService.getUnlockedAchievements();
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
+    if (_currentLevel.isEmpty) {
+      return const Scaffold(
+        backgroundColor: Color(0xFF1A1A1A),
+        body: Center(
+          child: CircularProgressIndicator(color: Colors.blue),
+        ),
+      );
+    }
     return Scaffold(
       backgroundColor: const Color(0xFF1A1A1A),
       appBar: AppBar(
@@ -60,18 +115,18 @@ class AchievementScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          const Text(
-            '詐騙終結者',
-            style: TextStyle(
+          Text(
+            _currentLevel['name'] ?? '異常紀錄者',
+            style: const TextStyle(
               color: Colors.white,
               fontSize: 24,
               fontWeight: FontWeight.bold,
             ),
           ),
           const SizedBox(height: 4),
-          const Text(
-            'Lv. 5',
-            style: TextStyle(
+          Text(
+            'Lv. ${_currentLevel['level'] ?? 2}',
+            style: const TextStyle(
               color: Colors.grey,
               fontSize: 16,
             ),
@@ -85,11 +140,11 @@ class AchievementScreen extends StatelessWidget {
     return Row(
       children: [
         Expanded(
-          child: _buildStatCard('總積分', '1,250', Colors.blue),
+          child: _buildStatCard('總積分', '${_scoreService.currentScore}', Colors.blue),
         ),
         const SizedBox(width: 12),
         Expanded(
-          child: _buildStatCard('目前等級', '5', Colors.green),
+          child: _buildStatCard('目前等級', '${_currentLevel['level'] ?? 2}', Colors.green),
         ),
         const SizedBox(width: 12),
         Expanded(
@@ -150,9 +205,11 @@ class AchievementScreen extends StatelessWidget {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              const Text(
-                '1250 / 1500',
-                style: TextStyle(
+              Text(
+                _nextLevel != null 
+                  ? '${_scoreService.currentScore} / ${_nextLevel!['minScore']}'
+                  : '已達最高等級',
+                style: const TextStyle(
                   color: Colors.grey,
                   fontSize: 14,
                 ),
@@ -161,15 +218,20 @@ class AchievementScreen extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           LinearProgressIndicator(
-            value: 0.83,
+            value: _nextLevel != null 
+              ? (_scoreService.currentScore - _currentLevel['minScore']) / 
+                (_nextLevel!['minScore'] - _currentLevel['minScore'])
+              : 1.0,
             backgroundColor: const Color(0xFF3A3A3A),
             valueColor: const AlwaysStoppedAnimation<Color>(Colors.orange),
             minHeight: 8,
           ),
           const SizedBox(height: 8),
-          const Text(
-            '再獲得 250 積分即可升級！',
-            style: TextStyle(
+          Text(
+            _nextLevel != null 
+              ? '再獲得 ${_nextLevel!['minScore'] - _scoreService.currentScore} 積分即可升級！'
+              : '恭喜達到最高等級！',
+            style: const TextStyle(
               color: Colors.grey,
               fontSize: 12,
             ),
@@ -199,12 +261,12 @@ class AchievementScreen extends StatelessWidget {
           crossAxisSpacing: 12,
           mainAxisSpacing: 12,
           children: [
-            _buildAchievementBadge('新手守護者', Icons.security, true),
-            _buildAchievementBadge('被騙達人', Icons.lock, true),
-            _buildAchievementBadge('百人斬', Icons.person, true),
-            _buildAchievementBadge('社群領袖', Icons.group, false),
-            _buildAchievementBadge('詐騙偵探', Icons.search, false),
-            _buildAchievementBadge('正義夥伴', Icons.gavel, false),
+            _buildAchievementBadge('新手守護者', Icons.security, _unlockedAchievements.contains('新手守護者')),
+            _buildAchievementBadge('異常紀錄者', Icons.warning, _unlockedAchievements.contains('異常紀錄者')),
+            _buildAchievementBadge('警惕之眼', Icons.visibility, _unlockedAchievements.contains('警惕之眼')),
+            _buildAchievementBadge('稽核助理', Icons.assignment, _unlockedAchievements.contains('稽核助理')),
+            _buildAchievementBadge('資訊分析員', Icons.analytics, _unlockedAchievements.contains('資訊分析員')),
+            _buildAchievementBadge('真相追索者', Icons.search, _unlockedAchievements.contains('真相追索者')),
           ],
         ),
       ],
@@ -259,7 +321,7 @@ class AchievementScreen extends StatelessWidget {
         const SizedBox(height: 16),
         _buildLeaderboardItem('#8,123', '正義使者A', '1,265', false),
         _buildLeaderboardItem('#8,124', '守護者9527', '1,255', false),
-        _buildLeaderboardItem('#8,125', '詐騙終結者', '1,250', true),
+        _buildLeaderboardItem('#8,125', _currentLevel['name'] ?? '異常紀錄者', '${_scoreService.currentScore}', true),
         _buildLeaderboardItem('#8,126', '貓貓貓拳', '1,240', false),
         _buildLeaderboardItem('#8,127', '孤獨的美食家', '1,238', false),
       ],

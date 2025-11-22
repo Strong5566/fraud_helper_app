@@ -3,6 +3,7 @@ import 'chat_screen.dart';
 import 'history_screen.dart';
 import 'achievement_screen.dart';
 import 'settings_screen.dart';
+import '../services/achievement_notifier.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -13,13 +14,20 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
+  final GlobalKey<State<AchievementScreen>> _achievementKey = GlobalKey();
 
-  final List<Widget> _pages = [
-    const ChatScreen(),
-    const HistoryScreen(),
-    const AchievementScreen(),
-    const SettingsScreen(),
-  ];
+  late final List<Widget> _pages;
+
+  @override
+  void initState() {
+    super.initState();
+    _pages = [
+      const ChatScreen(),
+      const HistoryScreen(),
+      AchievementScreen(key: _achievementKey),
+      const SettingsScreen(),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -34,7 +42,12 @@ class _MainScreenState extends State<MainScreen> {
         selectedItemColor: Colors.blue,
         unselectedItemColor: Colors.grey,
         currentIndex: _currentIndex,
-        onTap: (index) => setState(() => _currentIndex = index),
+        onTap: (index) {
+          setState(() => _currentIndex = index);
+          if (index == 2) {
+            AchievementNotifier().refreshAchievements();
+          }
+        },
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.chat_bubble),
