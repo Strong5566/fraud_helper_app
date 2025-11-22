@@ -1,16 +1,84 @@
-# fraud_game
+# 詐騙偵測器 (Fraud Detector)
 
-demo for hackathon
+一個用於 Hackathon 的詐騙偵測互動應用程式，幫助使用者識別和防範詐騙行為。
 
-## Getting Started
+## 功能特色
 
-This project is a starting point for a Flutter application.
+- 🤖 **智能聊天系統** - 與 AI 助手對話，學習識別詐騙手法
+- 📊 **歷史紀錄** - 查看過往的對話和檢測結果
+- 🏆 **成就系統** - 完成任務獲得成就，提升防詐意識
+- ⚙️ **個人設定** - 自訂應用程式偏好設定
+- 📱 **跨平台支援** - 支援 iOS、Android 和 Web
 
-A few resources to get you started if this is your first Flutter project:
+## 技術架構
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+- **框架**: Flutter 3.8.1+
+- **語言**: Dart
+- **主要套件**:
+  - `http`: API 通訊
+  - `webview_flutter`: 網頁檢視
+  - `image_picker`: 圖片選擇
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## 專案結構
+
+```
+lib/
+├── models/          # 資料模型
+├── screens/         # 畫面頁面
+├── services/        # 業務邏輯服務
+├── utils/          # 工具類別
+├── widgets/        # 可重用元件
+└── main.dart       # 應用程式入口
+```
+
+## 開始使用
+
+### 環境需求
+
+- Flutter SDK 3.8.1 或更高版本
+- Dart SDK
+- Android Studio / VS Code
+- iOS 開發需要 Xcode (僅限 macOS)
+
+### 安裝步驟
+
+1. 複製專案
+```bash
+git clone <repository-url>
+cd fraud_game
+```
+
+2. 安裝依賴套件
+```bash
+flutter pub get
+```
+
+3. 執行應用程式
+```bash
+# Android/iOS
+flutter run
+
+# Web
+flutter run -d web
+```
+
+## 建置發布
+
+```bash
+# Android APK
+flutter build apk
+
+# iOS (需要 macOS)
+flutter build ios
+
+# Web
+flutter build web
+```
+
+## 貢獻指南
+
+歡迎提交 Issue 和 Pull Request 來改善這個專案。
+
+## 授權
+
+此專案僅供 Hackathon 演示使用。
