@@ -25,13 +25,14 @@ class _ChatScreenState extends State<ChatScreen> with AutomaticKeepAliveClientMi
     _addMessage(_chatService.getWelcomeMessage(), false);
   }
 
-  void _addMessage(String text, bool isUser, {String? imagePath}) {
+  void _addMessage(String text, bool isUser, {String? imagePath, String? riskLevel}) {
     setState(() {
       _messages.add(Message(
         text: text,
         isUser: isUser,
         timestamp: DateTime.now(),
         imagePath: imagePath,
+        riskLevel: riskLevel,
       ));
     });
     _scrollToBottom();
@@ -87,7 +88,7 @@ class _ChatScreenState extends State<ChatScreen> with AutomaticKeepAliveClientMi
       setState(() {
         _isTyping = false;
       });
-      _addMessage(response, false);
+      _addMessage(response['text'], false, riskLevel: response['riskLevel']);
     } catch (e) {
       setState(() {
         _isTyping = false;

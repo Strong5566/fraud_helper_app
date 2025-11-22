@@ -13,32 +13,11 @@ class ChatService {
     return "嗨！我是瓜瓜，你的詐騙偵測助手！有什麼可疑訊息想要我幫你分析嗎？";
   }
 
-  Future<String> getResponse(String userMessage) async {
-    try {
-      print('發送請求到: $_baseUrl/chat');
-      print('請求內容: {"message": "$userMessage", "user_id": "$_userId"}');
-      
-      final response = await http.post(
-        Uri.parse('$_baseUrl/chat'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'message': userMessage,
-          'user_id': _userId,
-        }),
-      );
-
-      print('回應狀態碼: ${response.statusCode}');
-      print('回應內容: ${response.body}');
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        return data['response']['text'] ?? '瓜瓜沒有收到回應';
-      } else {
-        return '瓜瓜連線有問題，請稍後再試 (狀態碼: ${response.statusCode})';
-      }
-    } catch (e) {
-      print('錯誤詳情: $e');
-      return '瓜瓜連線失敗: $e';
-    }
+  Future<Map<String, dynamic>> getResponse(String userMessage) async {
+    // 模擬高風險回應
+    return {
+      'text': '⚠️ 瓜瓜偵測到這可能是詐騙訊息！對方可能正在嘗試騙取你的個人資訊或金錢。請立即停止對話並考慮檢舉此帳號。',
+      'riskLevel': 'high',
+    };
   }
 }

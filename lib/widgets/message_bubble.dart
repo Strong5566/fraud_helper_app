@@ -33,6 +33,25 @@ class MessageBubble extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  if (message.riskLevel == 'high') ...[
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      margin: const EdgeInsets.only(bottom: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.red.withOpacity(0.2),
+                        border: Border.all(color: Colors.red, width: 2),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Text(
+                        '風險等級：高',
+                        style: TextStyle(
+                          color: Colors.red,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                  ],
                   if (message.imagePath != null) ...[
                     ClipRRect(
                       borderRadius: BorderRadius.circular(8),
@@ -53,6 +72,44 @@ class MessageBubble extends StatelessWidget {
                         fontSize: 16,
                       ),
                     ),
+                  if (message.riskLevel == 'high') ...[
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () {
+                              // 一鍵檢舉
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('已提交檢舉')),
+                              );
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.orange,
+                              foregroundColor: Colors.white,
+                            ),
+                            child: const Text('一鍵檢舉'),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () {
+                              // 協助報案
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('已連結報案系統')),
+                              );
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.red,
+                              foregroundColor: Colors.white,
+                            ),
+                            child: const Text('協助報案'),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ],
               ),
             ),
