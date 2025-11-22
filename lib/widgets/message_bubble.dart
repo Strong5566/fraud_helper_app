@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:io';
 import '../models/message.dart';
 
 class MessageBubble extends StatelessWidget {
@@ -29,12 +30,30 @@ class MessageBubble extends StatelessWidget {
                 color: message.isUser ? Colors.blue : const Color(0xFF2A2A2A),
                 borderRadius: BorderRadius.circular(18),
               ),
-              child: Text(
-                message.text,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (message.imagePath != null) ...[
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.file(
+                        File(message.imagePath!),
+                        width: 200,
+                        height: 200,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                    if (message.text.isNotEmpty) const SizedBox(height: 8),
+                  ],
+                  if (message.text.isNotEmpty)
+                    Text(
+                      message.text,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                      ),
+                    ),
+                ],
               ),
             ),
           ),

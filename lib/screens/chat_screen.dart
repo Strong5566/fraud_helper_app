@@ -12,7 +12,7 @@ class ChatScreen extends StatefulWidget {
   State<ChatScreen> createState() => _ChatScreenState();
 }
 
-class _ChatScreenState extends State<ChatScreen> {
+class _ChatScreenState extends State<ChatScreen> with AutomaticKeepAliveClientMixin {
   final TextEditingController _controller = TextEditingController();
   final List<Message> _messages = [];
   final ScrollController _scrollController = ScrollController();
@@ -25,15 +25,33 @@ class _ChatScreenState extends State<ChatScreen> {
     _addMessage(_chatService.getWelcomeMessage(), false);
   }
 
-  void _addMessage(String text, bool isUser) {
+  void _addMessage(String text, bool isUser, {String? imagePath}) {
     setState(() {
       _messages.add(Message(
         text: text,
         isUser: isUser,
         timestamp: DateTime.now(),
+        imagePath: imagePath,
       ));
     });
     _scrollToBottom();
+  }
+
+  void _sendImage(String imagePath) {
+    _addMessage('', true, imagePath: imagePath);
+    
+    // 模擬 AI 回應
+    setState(() {
+      _isTyping = true;
+    });
+    _scrollToBottom();
+    
+    Future.delayed(const Duration(seconds: 1), () {
+      setState(() {
+        _isTyping = false;
+      });
+      _addMessage('瓜瓜看到了你的圖片！讓我分析一下...', false);
+    });
   }
 
   void _scrollToBottom() {
@@ -79,7 +97,11 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   @override
+  bool get wantKeepAlive => true;
+
+  @override
   Widget build(BuildContext context) {
+    super.build(context);
     return Scaffold(
       appBar: AppBar(
         title: const Text('詐騙偵測器'),
@@ -111,6 +133,7 @@ class _ChatScreenState extends State<ChatScreen> {
           ChatInput(
             controller: _controller,
             onSend: _sendMessage,
+            onImageSelected: _sendImage,
           ),
         ],
       ),

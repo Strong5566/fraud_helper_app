@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 
 class ChatInput extends StatelessWidget {
   final TextEditingController controller;
   final VoidCallback onSend;
+  final Function(String) onImageSelected;
 
   const ChatInput({
     super.key,
     required this.controller,
     required this.onSend,
+    required this.onImageSelected,
   });
 
   @override
@@ -20,6 +23,28 @@ class ChatInput extends StatelessWidget {
       ),
       child: Row(
         children: [
+          GestureDetector(
+            onTap: () async {
+              final picker = ImagePicker();
+              final image = await picker.pickImage(source: ImageSource.gallery);
+              if (image != null) {
+                onImageSelected(image.path);
+              }
+            },
+            child: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: const BoxDecoration(
+                color: Colors.grey,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.image,
+                color: Colors.white,
+                size: 20,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
           Expanded(
             child: TextField(
               controller: controller,
