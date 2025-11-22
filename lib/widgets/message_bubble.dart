@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:io';
 import '../models/message.dart';
+import '../screens/report_webview_screen.dart';
 import '../utils/app_images.dart';
 
 class MessageBubble extends StatelessWidget {
@@ -95,9 +96,11 @@ class MessageBubble extends StatelessWidget {
                         Expanded(
                           child: ElevatedButton(
                             onPressed: () {
-                              // 協助報案
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('已連結報案系統')),
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const ReportWebViewScreen(),
+                                ),
                               );
                             },
                             style: ElevatedButton.styleFrom(
