@@ -26,6 +26,12 @@ class _ReportWebViewScreenState extends State<ReportWebViewScreen> {
           _autoUploadImage();
         },
       )
+      ..addJavaScriptChannel(
+        'debugLog',
+        onMessageReceived: (JavaScriptMessage message) {
+          print('[WebView Debug] ${message.message}');
+        },
+      )
       ..setNavigationDelegate(
         NavigationDelegate(
           onPageFinished: (String url) {
@@ -45,44 +51,92 @@ class _ReportWebViewScreenState extends State<ReportWebViewScreen> {
       final image = await picker.pickImage(source: ImageSource.gallery);
       
       if (image != null) {
-        final bytes = await File(image.path).readAsBytes();
-        final base64Image = 'data:image/jpeg;base64,' + 
-            String.fromCharCodes(bytes);
+        print('[Flutter] 選擇了圖片: ${image.path}');
         
         controller.runJavaScript('''
-          // 等待對話框出現
+          debugLog.postMessage('=== 開始自動上傳圖片流程 ===');
+          
+          // 等待對話框出現後點擊上傳區域
           setTimeout(function() {
-            // 尋找檔案輸入欄位（可能在對話框中）
-            var fileInput = document.querySelector('input[type="file"]') || 
-                           document.querySelector('input[accept*="image"]');
+            debugLog.postMessage('步驟1: 尋找上傳區域');
+            var uploadLabel = document.querySelector('label.upload-input');
+            debugLog.postMessage('上傳區域元素: ' + (uploadLabel ? 'Found' : 'Not found'));
             
-            if (fileInput) {
-              // 創建模擬檔案
-              var blob = new Blob([new Uint8Array(1024)], {type: 'image/jpeg'});
-              var file = new File([blob], 'fraud_evidence.jpg', {type: 'image/jpeg'});
+            if (uploadLabel) {
+              debugLog.postMessage('步驟2: 找到上傳區域，準備點擊');
+              uploadLabel.click();
               
-              var dataTransfer = new DataTransfer();
-              dataTransfer.items.add(file);
-              fileInput.files = dataTransfer.files;
-              
-              // 觸發事件
-              fileInput.dispatchEvent(new Event('change', {bubbles: true}));
-              fileInput.dispatchEvent(new Event('input', {bubbles: true}));
-              
-              // 尋找並點擊儲存按鈕
+              // 等待檔案選擇器觸發後模擬檔案上傳
               setTimeout(function() {
-                var saveButtons = document.querySelectorAll('button, input[type="submit"], .btn');
-                for (var i = 0; i < saveButtons.length; i++) {
-                  var btnText = saveButtons[i].textContent || saveButtons[i].value || '';
-                  if (btnText.includes('儲存') || btnText.includes('確定') || 
-                      btnText.includes('上傳') || btnText.includes('送出')) {
-                    saveButtons[i].click();
-                    break;
-                  }
+                debugLog.postMessage('步驟3: 尋找檔案輸入欄位');
+                var fileInput = document.querySelector('input.files-input') || 
+                               document.querySelector('input[type="file"][accept*="jpg"]');
+                debugLog.postMessage('檔案輸入元素: ' + (fileInput ? 'Found' : 'Not found'));
+                
+                if (fileInput) {
+                  debugLog.postMessage('步驟4: 找到檔案輸入欄位');
+                  debugLog.postMessage('原始files數量: ' + fileInput.files.length);
+                  
+                  // 創建簡單的模擬檔案
+                  var blob = new Blob([new ArrayBuffer(1024)], {type: 'image/jpeg'});
+                  var file = new File([blob], 'fraud_evidence.jpg', {
+                    type: 'image/jpeg',
+                    lastModified: Date.now()
+                  });
+                  
+                  debugLog.postMessage('步驟5: 創建檔案物件');
+                  debugLog.postMessage('檔案名稱: ' + file.name);
+                  debugLog.postMessage('檔案大小: ' + file.size);
+                  
+                  // 創建 DataTransfer 並設定檔案
+                  var dataTransfer = new DataTransfer();
+                  dataTransfer.items.add(file);
+                  fileInput.files = dataTransfer.files;
+                  
+                  debugLog.postMessage('步驟6: 檔案已設定到input');
+                  debugLog.postMessage('設定後files數量: ' + fileInput.files.length);
+                  
+                  // 觸發所有相關事件
+                  debugLog.postMessage('步驟7: 觸發change和input事件');
+                  fileInput.dispatchEvent(new Event('change', {bubbles: true}));
+                  fileInput.dispatchEvent(new Event('input', {bubbles: true}));
+                  
+                  // 監聽網頁的反應
+                  setTimeout(function() {
+                    debugLog.postMessage('步驟8: 檢查網頁反應');
+                    debugLog.postMessage('當前files數量: ' + fileInput.files.length);
+                  }, 200);
+                  
+                  // 等待處理完成後點擊儲存按鈕
+                  setTimeout(function() {
+                    debugLog.postMessage('步驟9: 尋找儲存按鈕');
+                    var saveBtn = document.querySelector('button.btn-outline-secondary');
+                    debugLog.postMessage('儲存按鈕元素: ' + (saveBtn ? 'Found' : 'Not found'));
+                    
+                    if (saveBtn && saveBtn.textContent.includes('儲存')) {
+                      debugLog.postMessage('步驟10: 點擊儲存按鈕');
+                      saveBtn.click();
+                    } else {
+                      debugLog.postMessage('步驟10: 使用備用方案尋找儲存按鈕');
+                      var allBtns = document.querySelectorAll('button');
+                      debugLog.postMessage('所有按鈕數量: ' + allBtns.length);
+                      for (var i = 0; i < allBtns.length; i++) {
+                        if (allBtns[i].textContent.includes('儲存')) {
+                          debugLog.postMessage('找到儲存按鈕並點擊，索引: ' + i);
+                          allBtns[i].click();
+                          break;
+                        }
+                      }
+                    }
+                  }, 1000);
+                } else {
+                  debugLog.postMessage('錯誤: 未找到檔案輸入欄位');
                 }
               }, 500);
+            } else {
+              debugLog.postMessage('錯誤: 未找到上傳區域');
             }
-          }, 1000);
+          }, 1500);
         ''');
         
         ScaffoldMessenger.of(context).showSnackBar(
@@ -90,6 +144,7 @@ class _ReportWebViewScreenState extends State<ReportWebViewScreen> {
         );
       }
     } catch (e) {
+      print('[Flutter] 上傳失敗: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('上傳失敗: $e')),
       );
@@ -163,22 +218,35 @@ class _ReportWebViewScreenState extends State<ReportWebViewScreen> {
             textareas[j].dispatchEvent(new Event('input'));
           }
           
-          // 尋找圖片上傳區域並點擊
+          // 尋找並點擊第五個 "+ 新增" 按鈕
           setTimeout(function() {
-            var uploadElements = document.querySelectorAll('button, a, div, span, input');
-            for (var k = 0; k < uploadElements.length; k++) {
-              var elementText = uploadElements[k].textContent || uploadElements[k].title || uploadElements[k].alt || '';
-              if (elementText.includes('新增圖片') || elementText.includes('上傳圖片') || 
-                  elementText.includes('選擇檔案') || elementText.includes('添加圖片') ||
-                  uploadElements[k].className.includes('upload') || 
-                  uploadElements[k].id.includes('upload')) {
-                uploadElements[k].click();
-                
-                // 通知 Flutter 自動上傳圖片
-                setTimeout(function() {
-                  uploadImage.postMessage('');
-                }, 1500);
-                break;
+            var addBtns = document.querySelectorAll('button.deletBtn');
+            if (addBtns.length >= 5) {
+              debugLog.postMessage('=== 找到第五個新增按鈕，準備點擊 ===');
+              debugLog.postMessage('按鈕HTML: ' + addBtns[4].outerHTML.substring(0, 100));
+              addBtns[4].click(); // 第五個按鈕（索引為4）
+              
+              // 通知 Flutter 自動上傳圖片
+              setTimeout(function() {
+                uploadImage.postMessage('');
+              }, 2000);
+            } else {
+              // 備用方案：尋找所有包含新增文字的按鈕並選擇第五個
+              var allBtns = document.querySelectorAll('button');
+              var addBtnCount = 0;
+              for (var i = 0; i < allBtns.length; i++) {
+                if (allBtns[i].textContent.includes('新增')) {
+                  addBtnCount++;
+                  if (addBtnCount === 5) {
+                    debugLog.postMessage('=== 找到第五個新增按鈕（備用方案） ===');
+                    debugLog.postMessage('按鈕HTML: ' + allBtns[i].outerHTML.substring(0, 100));
+                    allBtns[i].click();
+                    setTimeout(function() {
+                      uploadImage.postMessage('');
+                    }, 2000);
+                    break;
+                  }
+                }
               }
             }
           }, 3000);
