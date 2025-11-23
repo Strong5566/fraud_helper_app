@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/message.dart';
 import '../services/chat_service.dart';
+import '../services/user_data_service.dart';
 import '../widgets/message_bubble.dart';
 import '../widgets/chat_input.dart';
 import '../widgets/typing_indicator.dart';
@@ -39,9 +40,9 @@ class _ChatScreenState extends State<ChatScreen> with AutomaticKeepAliveClientMi
   }
 
   void _sendImage(String imagePath) {
+    UserDataService().setImagePath(imagePath);
     _addMessage('', true, imagePath: imagePath);
     
-    // 模擬 AI 回應
     setState(() {
       _isTyping = true;
     });
@@ -71,20 +72,23 @@ class _ChatScreenState extends State<ChatScreen> with AutomaticKeepAliveClientMi
     if (_controller.text.trim().isEmpty) return;
     
     final userMessage = _controller.text.trim();
+    
+    // 檢查是否為第一條訊息（可能是姓名）
+    if (_messages.length == 1) { // 只有歡迎訊息
+      UserDataService().setUserName(userMessage);
+    }
+    
     _addMessage(userMessage, true);
     _controller.clear();
 
-    // 顯示打字動畫
     setState(() {
       _isTyping = true;
     });
     _scrollToBottom();
 
     try {
-      // AI 回應
       final response = await _chatService.getResponse(userMessage);
       
-      // 隱藏打字動畫並顯示回應
       setState(() {
         _isTyping = false;
       });

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:image_picker/image_picker.dart';
+import '../services/user_data_service.dart';
 import 'dart:io';
 import 'dart:convert';
 
@@ -48,16 +49,15 @@ class _ReportWebViewScreenState extends State<ReportWebViewScreen> {
 
   void _autoUploadImage() async {
     try {
-      final picker = ImagePicker();
-      final image = await picker.pickImage(source: ImageSource.gallery);
+      final imagePath = UserDataService().imagePath;
       
-      if (image != null) {
-        print('[Flutter] 選擇了圖片: ${image.path}');
+      if (imagePath != null) {
+        print('[Flutter] 使用已選擇的圖片: $imagePath');
         
-        // 讀取圖片並轉換為 base64
-        final bytes = await image.readAsBytes();
+        final imageFile = File(imagePath);
+        final bytes = await imageFile.readAsBytes();
         final base64Image = base64Encode(bytes);
-        final fileName = image.name;
+        final fileName = imageFile.path.split('/').last;
         
         controller.runJavaScript('''
           debugLog.postMessage('=== 開始自動上傳圖片流程 ===');
@@ -167,7 +167,7 @@ class _ReportWebViewScreenState extends State<ReportWebViewScreen> {
                          document.querySelector('input[id="name"]') ||
                          document.querySelector('input[placeholder*="姓名"]');
           if (nameInput) {
-            nameInput.value = '黃壯壯';
+            nameInput.value = '${UserDataService().userName ?? '黃壯壯'}';
             nameInput.dispatchEvent(new Event('input', {bubbles: true}));
             nameInput.dispatchEvent(new Event('change', {bubbles: true}));
             nameInput.dispatchEvent(new Event('blur', {bubbles: true}));
