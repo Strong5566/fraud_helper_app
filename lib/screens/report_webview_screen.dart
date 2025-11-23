@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
+import 'dart:convert';
 
 class ReportWebViewScreen extends StatefulWidget {
   const ReportWebViewScreen({super.key});
@@ -53,10 +54,14 @@ class _ReportWebViewScreenState extends State<ReportWebViewScreen> {
       if (image != null) {
         print('[Flutter] 選擇了圖片: ${image.path}');
         
+        // 讀取圖片並轉換為 base64
+        final bytes = await image.readAsBytes();
+        final base64Image = base64Encode(bytes);
+        final fileName = image.name;
+        
         controller.runJavaScript('''
           debugLog.postMessage('=== 開始自動上傳圖片流程 ===');
           
-          // 等待對話框出現後點擊上傳區域
           setTimeout(function() {
             debugLog.postMessage('步驟1: 尋找上傳區域');
             var uploadLabel = document.querySelector('label.upload-input');
@@ -66,7 +71,6 @@ class _ReportWebViewScreenState extends State<ReportWebViewScreen> {
               debugLog.postMessage('步驟2: 找到上傳區域，準備點擊');
               uploadLabel.click();
               
-              // 等待檔案選擇器觸發後模擬檔案上傳
               setTimeout(function() {
                 debugLog.postMessage('步驟3: 尋找檔案輸入欄位');
                 var fileInput = document.querySelector('input.files-input') || 
@@ -75,20 +79,26 @@ class _ReportWebViewScreenState extends State<ReportWebViewScreen> {
                 
                 if (fileInput) {
                   debugLog.postMessage('步驟4: 找到檔案輸入欄位');
-                  debugLog.postMessage('原始files數量: ' + fileInput.files.length);
                   
-                  // 創建簡單的模擬檔案
-                  var blob = new Blob([new ArrayBuffer(1024)], {type: 'image/jpeg'});
-                  var file = new File([blob], 'fraud_evidence.jpg', {
+                  // 將 base64 轉換為 Blob
+                  var base64Data = '$base64Image';
+                  var byteCharacters = atob(base64Data);
+                  var byteNumbers = new Array(byteCharacters.length);
+                  for (var i = 0; i < byteCharacters.length; i++) {
+                    byteNumbers[i] = byteCharacters.charCodeAt(i);
+                  }
+                  var byteArray = new Uint8Array(byteNumbers);
+                  var blob = new Blob([byteArray], {type: 'image/jpeg'});
+                  
+                  var file = new File([blob], '$fileName', {
                     type: 'image/jpeg',
                     lastModified: Date.now()
                   });
                   
-                  debugLog.postMessage('步驟5: 創建檔案物件');
+                  debugLog.postMessage('步驟5: 創建真實圖片檔案');
                   debugLog.postMessage('檔案名稱: ' + file.name);
-                  debugLog.postMessage('檔案大小: ' + file.size);
+                  debugLog.postMessage('檔案大小: ' + file.size + ' bytes');
                   
-                  // 創建 DataTransfer 並設定檔案
                   var dataTransfer = new DataTransfer();
                   dataTransfer.items.add(file);
                   fileInput.files = dataTransfer.files;
@@ -96,37 +106,30 @@ class _ReportWebViewScreenState extends State<ReportWebViewScreen> {
                   debugLog.postMessage('步驟6: 檔案已設定到input');
                   debugLog.postMessage('設定後files數量: ' + fileInput.files.length);
                   
-                  // 觸發所有相關事件
-                  debugLog.postMessage('步驟7: 觸發change和input事件');
                   fileInput.dispatchEvent(new Event('change', {bubbles: true}));
                   fileInput.dispatchEvent(new Event('input', {bubbles: true}));
                   
-                  // 監聽網頁的反應
                   setTimeout(function() {
-                    debugLog.postMessage('步驟8: 檢查網頁反應');
-                    debugLog.postMessage('當前files數量: ' + fileInput.files.length);
-                  }, 200);
-                  
-                  // 等待處理完成後點擊儲存按鈕
-                  setTimeout(function() {
-                    debugLog.postMessage('步驟9: 尋找儲存按鈕');
-                    var saveBtn = document.querySelector('button.btn-outline-secondary');
-                    debugLog.postMessage('儲存按鈕元素: ' + (saveBtn ? 'Found' : 'Not found'));
+                    debugLog.postMessage('步驟7: 尋找儲存按鈕');
+                    var saveBtn = document.querySelector('button.btn-outline-secondary i.fa-save') ? 
+                                 document.querySelector('button.btn-outline-secondary i.fa-save').parentElement :
+                                 document.querySelector('button.btn-outline-secondary');
                     
-                    if (saveBtn && saveBtn.textContent.includes('儲存')) {
-                      debugLog.postMessage('步驟10: 點擊儲存按鈕');
-                      saveBtn.click();
-                    } else {
-                      debugLog.postMessage('步驟10: 使用備用方案尋找儲存按鈕');
+                    if (!saveBtn) {
+                      // 備用方案：尋找包含儲存文字的按鈕
                       var allBtns = document.querySelectorAll('button');
-                      debugLog.postMessage('所有按鈕數量: ' + allBtns.length);
                       for (var i = 0; i < allBtns.length; i++) {
                         if (allBtns[i].textContent.includes('儲存')) {
-                          debugLog.postMessage('找到儲存按鈕並點擊，索引: ' + i);
-                          allBtns[i].click();
+                          saveBtn = allBtns[i];
                           break;
                         }
                       }
+                    }
+                    
+                    debugLog.postMessage('儲存按鈕: ' + (saveBtn ? 'Found' : 'Not found'));
+                    if (saveBtn) {
+                      debugLog.postMessage('步驟8: 點擊儲存按鈕');
+                      saveBtn.click();
                     }
                   }, 1000);
                 } else {
