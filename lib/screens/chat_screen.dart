@@ -5,6 +5,9 @@ import '../services/user_data_service.dart';
 import '../widgets/message_bubble.dart';
 import '../widgets/chat_input.dart';
 import '../widgets/typing_indicator.dart';
+import 'dart:io';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
@@ -39,7 +42,7 @@ class _ChatScreenState extends State<ChatScreen> with AutomaticKeepAliveClientMi
     _scrollToBottom();
   }
 
-  void _sendImage(String imagePath) {
+  void _sendImage(String imagePath) async {
     UserDataService().setImagePath(imagePath);
     _addMessage('', true, imagePath: imagePath);
     
@@ -48,12 +51,42 @@ class _ChatScreenState extends State<ChatScreen> with AutomaticKeepAliveClientMi
     });
     _scrollToBottom();
     
+    // 上傳圖片到 API
+    await _uploadImageToAPI(imagePath);
+    
     Future.delayed(const Duration(seconds: 1), () {
       setState(() {
         _isTyping = false;
       });
       _addMessage('瓜瓜看到了你的圖片！讓我分析一下...', false);
     });
+  }
+  
+  Future<void> _uploadImageToAPI(String imagePath) async {
+    try {
+      final imageFile = File(imagePath);
+      final bytes = await imageFile.readAsBytes();
+      
+      var request = http.MultipartRequest(
+        'POST',
+        Uri.parse('http://136.113.193.116:8080/img/uploadimg'),
+      );
+      
+      request.files.add(
+        http.MultipartFile.fromBytes(
+          'file',
+          bytes,
+          filename: imageFile.path.split('/').last,
+        ),
+      );
+      
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+      
+      print('API Response: ${response.body}');
+    } catch (e) {
+      print('API 呼叫錯誤: $e');
+    }
   }
 
   void _scrollToBottom() {
